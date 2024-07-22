@@ -9,7 +9,12 @@ class TodoApp:
     def __init__(self, root):
         self.root = root
         self.root.title("ますとマン")
-        self.tasks = [] # タスクを保持するためのリストを初期化
+        self.tasks = [{"priority": "重要", "content": "プレゼン資料作成", "deadline": "2024/07/31", "type": "研究", "color": "lightskyblue"},
+            {"priority": "！超重要！", "content": "就職活動", "deadline": "2024/08/15", "type": "就活", "color": "violet"},
+            {"priority": "なるはや", "content": "講義の復習", "deadline": "2024/08/01", "type": "講義", "color": "lightgreen"},
+            {"priority": "いつでも", "content": "読書", "deadline": "2024/09/01", "type": "その他", "color": "lightyellow"}
+        ]
+        self.sort_order = {"priority": False, "content": False, "deadline": False, "type": False}
 
         # ウィンドウ表示
         self.show_tasks_window()
@@ -17,10 +22,10 @@ class TodoApp:
     # タスク一覧表示
     def show_tasks_window(self):
         tree = ttk.Treeview(self.root, columns=("priority", "content", "deadline", "type"), show="headings")
-        tree.heading("priority", text="重要度")
-        tree.heading("content", text="内容")
-        tree.heading("deadline", text="締切")
-        tree.heading("type", text="タスクの種類")
+        tree.heading("priority", text="重要度", command=lambda: self.sort_by_column("priority"))
+        tree.heading("content", text="内容", command=lambda: self.sort_by_column("content"))
+        tree.heading("deadline", text="締切", command=lambda: self.sort_by_column("deadline"))
+        tree.heading("type", text="タスクの種類", command=lambda: self.sort_by_column("type"))
 
         tree.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
@@ -34,21 +39,22 @@ class TodoApp:
         tree.bind("<Double-1>", self.on_task_double_click)
 
         # 並べ替え機能の追加
-        sort_frame = ttk.Frame(self.root)
-        sort_frame.pack(padx=10, pady=10, fill=tk.X)
-
-        sort_label = ttk.Label(sort_frame, text="並べ替え:")
-        sort_label.pack(side=tk.LEFT, padx=5)
-        self.sort_combobox = ttk.Combobox(sort_frame, values=["重要度", "タスクの種類", "締切"])
-        self.sort_combobox.pack(side=tk.LEFT, padx=5)
-        sort_button = ttk.Button(sort_frame, text="並べ替え", command=self.sort_tasks)
-        sort_button.pack(side=tk.LEFT, padx=5)
-
         self.task_tree = tree
 
-        # タスク追加画面表示
+        # タスク削除ボタン表示
+        self.delete_task_button = ttk.Button(self.root, text="タスクを削除", command=self.delete_task)
+        self.delete_task_button.pack(side=tk.RIGHT, pady=10)
+
+        # タスク追加ボタン表示
         self.add_task_window_button = ttk.Button(self.root, text="タスクを追加", command=self.add_task_window)
         self.add_task_window_button.pack(pady=10)
+
+    # 並び替え
+    def sort_by_column(self, column):
+        self.sort_order[column] = not self.sort_order[column]
+        reverse = self.sort_order[column]
+        self.tasks.sort(key=lambda x: x[column], reverse=reverse)
+        self.display_tasks()
 
     # ダブルクリック
     def on_task_double_click(self, event):
@@ -88,6 +94,22 @@ class TodoApp:
         # タスク追加のボタン
         self.add_button = ttk.Button(task_window, text="タスクを追加する", command=self.update_task_window)
         self.add_button.grid(row=4, columnspan=2, pady=10)
+    
+    # タスク追加を押すと、タスク一覧を更新
+    def update_task_window(self):
+        self.add_task()
+        self.display_tasks()
+    
+    #タスクの削除
+    def delete_task(self):
+        selected_items = self.task_tree.selection()
+        if not selected_items:
+            messagebox.showwarning("選択エラー", "削除するタスクを選択してください")
+            return
+        for selected_item in selected_items:
+            task_index = int(self.task_tree.item(selected_item, "tags")[0].split("_")[1])
+            del self.tasks[task_index]
+        self.display_tasks()
 
     # タスク編集画面
     def edit_task_window(self,index):
@@ -138,11 +160,6 @@ class TodoApp:
         else:
             messagebox.showwarning("入力エラー", "全ての項目を入力してください")
 
-    # タスク追加を押すと、タスク一覧を更新
-    def update_task_window(self):
-        self.add_task()
-        self.display_tasks()
-
     # タスク追加の詳細情報
     def add_task(self):
         priority = self.priority_combobox.get()
@@ -170,19 +187,6 @@ class TodoApp:
             tag_name = f"task_{index}"
             self.task_tree.tag_configure(tag_name, background=task["color"])
             self.task_tree.insert("", tk.END, values=(task["priority"], task["content"], task["deadline"], task["type"], task["color"]), tags=(tag_name,))
-
-    # タスクの並び替え
-    def sort_tasks(self):
-        sort_key_map = {"重要度": "priority", "タスクの種類": "type", "締切": "deadline"}
-        sort_key = sort_key_map.get(self.sort_combobox.get())
-        if sort_key:
-            if sort_key == "priority":
-                self.tasks.sort(key=lambda x: x[sort_key], reverse=True)
-            else:
-                self.tasks.sort(key=lambda x: x[sort_key])
-            self.display_tasks()
-        else:
-            messagebox.showwarning("並べ替えエラー", "無効な並べ替えキーです")
 
 # アプリを実行
 if __name__ == "__main__":
