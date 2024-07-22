@@ -21,6 +21,17 @@ class TodoApp:
 
     # タスク一覧表示
     def show_tasks_window(self):
+        # 検索バー
+        search_frame = ttk.Frame(self.root)
+        search_frame.pack(padx=10, pady=10, fill=tk.X)
+        search_label = ttk.Label(search_frame, text="検索:")
+        search_label.pack(side=tk.LEFT, padx=5)
+        self.search_entry = ttk.Entry(search_frame)
+        self.search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        search_button = ttk.Button(search_frame, text="検索", command=self.search_tasks)
+        search_button.pack(side=tk.LEFT, padx=5)
+
+        # タスク一覧表示
         tree = ttk.Treeview(self.root, columns=("priority", "content", "deadline", "type"), show="headings")
         tree.heading("priority", text="重要度", command=lambda: self.sort_by_column("priority"))
         tree.heading("content", text="内容", command=lambda: self.sort_by_column("content"))
@@ -61,6 +72,17 @@ class TodoApp:
         item = self.task_tree.selection()[0]
         index=self.task_tree.index(item)
         self.edit_task_window(index)
+
+    # タスク検索機能
+    def search_tasks(self):
+        search_text = self.search_entry.get().lower()
+        matching_tasks = [task for task in self.tasks if search_text in task["content"].lower() or search_text in task["type"].lower()]
+        for row in self.task_tree.get_children():
+            self.task_tree.delete(row)
+        for index, task in enumerate(matching_tasks):
+            tag_name = f"task_{index}"
+            self.task_tree.tag_configure(tag_name, background=task["color"])
+            self.task_tree.insert("", tk.END, values=(task["priority"], task["content"], task["deadline"], task["type"]), tags=(tag_name,))
 
     # タスク追加画面
     def add_task_window(self):
