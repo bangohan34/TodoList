@@ -37,7 +37,6 @@ class TodoApp:
         tree.heading("content", text="内容", command=lambda: self.sort_by_column("content"))
         tree.heading("deadline", text="締切", command=lambda: self.sort_by_column("deadline"))
         tree.heading("type", text="タスクの種類", command=lambda: self.sort_by_column("type"))
-
         tree.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         # タスクを表示する
