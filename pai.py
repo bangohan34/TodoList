@@ -63,6 +63,18 @@ class TodoApp:
     def update_task_window(self):
         self.add_task()
         self.display_tasks()
+    
+    # タスク検索機能
+    def search_tasks(self):
+        search_text = self.search_entry.get().lower()
+        matching_tasks = [task for task in self.tasks if search_text in task["content"].lower() or search_text in task["type"].lower()]
+        for row in self.task_tree.get_children():
+            self.task_tree.delete(row)
+        for index, task in enumerate(matching_tasks):
+            tag_name = f"task_{index}"
+            self.task_tree.tag_configure(tag_name, background=task["color"])
+            self.task_tree.insert("", tk.END, values=(task["priority"], task["content"], task["deadline"], task["type"]), tags=(tag_name,))
+
 
     # タスク追加の詳細情報
     def add_task(self):
@@ -85,6 +97,18 @@ class TodoApp:
 
     # タスク一覧表示
     def show_tasks_window(self):
+
+        # 検索バーの追加
+        search_frame = ttk.Frame(self.root)
+        search_frame.pack(padx=10, pady=10, fill=tk.X)
+
+        search_label = ttk.Label(search_frame, text="検索:")
+        search_label.pack(side=tk.LEFT, padx=5)
+        self.search_entry = ttk.Entry(search_frame)
+        self.search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        search_button = ttk.Button(search_frame, text="検索", command=self.search_tasks)
+        search_button.pack(side=tk.LEFT, padx=5)
+
         tree = ttk.Treeview(self.root, columns=("priority", "content", "deadline", "type"), show="headings")
         tree.heading("priority", text="重要度")
         tree.heading("content", text="内容")
@@ -116,7 +140,7 @@ class TodoApp:
         self.add_task_window_button = ttk.Button(self.root, text="タスクを追加", command=self.add_task_window)
         self.add_task_window_button.pack(pady=10)
 
-        # タスク削除画面表示
+        # タスク削除ボタン
         self.delete_task_button = ttk.Button(self.root, text="タスクを削除", command=self.delete_task)
         self.delete_task_button.pack(side=tk.LEFT, pady=10)
 
